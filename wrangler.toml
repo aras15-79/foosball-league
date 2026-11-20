@@ -5,4 +5,4 @@ compatibility_date = "2025-06-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "foosball-league"
-database_id = "REPLACE_WITH_DATABASE_ID"
+database_id = "a5526942-a5f6-42f6-a256-7cba9a33eb67"
