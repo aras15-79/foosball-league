@@ -262,6 +262,13 @@ th.num, td.num { text-align: right; }
 .duo-bar span { display: block; height: 100%; background: var(--team); transform-origin: left; animation: fill 0.8s var(--ease) both; }
 
 /* Results feed */
+.results summary { cursor: pointer; list-style: none; margin-bottom: 0; }
+.results summary::-webkit-details-marker { display: none; }
+.results[open] summary { margin-bottom: 16px; }
+.results summary:hover h2 { color: var(--red); }
+.results .sec-note { margin-left: auto; width: auto; }
+.caret { width: 22px; height: 22px; stroke: var(--ink); stroke-width: 2.5; fill: none; align-self: center; transition: transform 0.25s var(--ease); }
+.results[open] .caret { transform: rotate(180deg); }
 .feed { list-style: none; margin: 0; padding: 0; }
 .match {
   display: grid; grid-template-columns: 128px 1fr auto auto; align-items: center; gap: 14px;

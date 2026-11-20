@@ -468,6 +468,7 @@ function renderDuos(matches) {
 function renderFeed(matches) {
   const el = $("#feed");
   const recent = matches.slice(-20).reverse();
+  $("#feed-count").textContent = matches.length ? `Latest ${recent.length} of ${matches.length}` : "";
   if (!recent.length) { el.innerHTML = `<li>${emptyState("No matches yet. Hit Record match after your next game.")}</li>`; return; }
   el.innerHTML = recent.map((m, i) => {
     const losers = losersOf(m);
