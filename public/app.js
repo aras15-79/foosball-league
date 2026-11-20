@@ -41,17 +41,24 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } },
+  remove(k) { try { localStorage.removeItem(k); } catch { /* storage unavailable */ } },
 };
 
 /* ---------- API ---------- */
 
 async function api(path, options = {}) {
   const headers = { "content-type": "application/json" };
+  const admin = store.get("admin");
   const pin = store.get("pin");
-  if (pin) headers["x-pin"] = pin;
+  if (admin) headers["x-admin"] = admin;
+  else if (pin) headers["x-pin"] = pin;
   const res = await fetch(path, { ...options, headers });
   if (res.status === 401 && options.method) {
-    const entered = prompt("Enter the league PIN to make changes");
+    if (admin) {
+      setAdmin(null);
+      throw new Error("Admin login expired, please log in again");
+    }
+    const entered = prompt("Enter the league PIN to record a result");
     if (!entered) throw new Error("PIN required");
     store.set("pin", entered);
     return api(path, options);
@@ -61,6 +68,36 @@ async function api(path, options = {}) {
     throw new Error(body.error || `Request failed (${res.status})`);
   }
   return res.status === 204 ? null : res.json();
+}
+
+function setAdmin(password) {
+  if (password) store.set("admin", password);
+  else store.remove("admin");
+  state.admin = Boolean(password);
+  $("#admin-toggle").textContent = state.admin ? "Log out" : "Admin";
+  render(false);
+}
+
+async function onLogin(e) {
+  e.preventDefault();
+  const input = $("#admin-password");
+  const error = $("#login-error");
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin": input.value },
+      body: "{}",
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Login failed");
+    setAdmin(input.value);
+    input.value = "";
+    error.hidden = true;
+    $("#login").close();
+    toast("Logged in as admin");
+  } catch (err) {
+    error.textContent = err.message;
+    error.hidden = false;
+  }
 }
 
 async function load() {
@@ -489,7 +526,7 @@ function renderFeed(matches) {
           <span class="side lose"><span class="stack">${losers.map((id) => avatar(id, "sm")).join("")}</span>${esc(names(losers))}</span>
         </div>
         <time datetime="${m.played_at}" data-tip="${esc(fullDate(m.played_at))}">${relTime(m.played_at)}</time>
-        <button type="button" class="del" data-del="${m.id}" aria-label="Delete match">${ICON.trash}</button>
+        ${state.admin ? `<button type="button" class="del" data-del="${m.id}" aria-label="Delete match">${ICON.trash}</button>` : ""}
       </li>`;
   }).join("");
 }
@@ -571,7 +608,7 @@ function renderDrawer(id) {
     <div class="section-title">Last 10 results</div>
     <div class="form">${formDots(s.results, 10)}</div>
     ${rivals ? `<div class="section-title">Rivals and partners</div><div class="rivals">${rivals}</div>` : ""}
-    ${state.matches.some((m) => m.players.includes(id)) ? "" : `<button type="button" class="btn-ghost remove-player" data-remove-player="${id}">Remove player</button>`}`;
+    ${!state.admin || state.matches.some((m) => m.players.includes(id)) ? "" : `<button type="button" class="btn-ghost remove-player" data-remove-player="${id}">Remove player</button>`}`;
   countUp($("#drawer-body"));
 }
 
@@ -625,6 +662,7 @@ function renderRecord() {
       <div class="type-desc">${RULES[t].desc}</div>
     </button>`).join("");
 
+  $("#add-player-row").hidden = !state.admin;
   const full = d.players.length >= rule.size;
   $("#who-label").innerHTML = `Who played?<span class="count">${d.players.length}/${rule.size}</span>`;
   $("#who").innerHTML = state.players.map((p) => {
@@ -839,7 +877,20 @@ $("#theme-toggle").addEventListener("click", () => {
   render(false);
 });
 
+$("#admin-toggle").addEventListener("click", () => {
+  if (state.admin) { setAdmin(null); toast("Logged out"); return; }
+  $("#login-error").hidden = true;
+  $("#login").showModal();
+  $("#admin-password").focus();
+});
+$("#login-form").addEventListener("submit", onLogin);
+$("#login").addEventListener("click", (e) => {
+  if (e.target === $("#login") || e.target.closest("[data-close-login]")) $("#login").close();
+});
+
 applyTheme(theme());
+state.admin = Boolean(store.get("admin"));
+$("#admin-toggle").textContent = state.admin ? "Log out" : "Admin";
 state.period = ["all", "month", "week"].includes(store.get("period")) ? store.get("period") : "all";
 skeleton();
 renderPeriod();

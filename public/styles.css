@@ -75,7 +75,7 @@ svg { display: block; }
   font-family: var(--cond); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em;
   padding-bottom: 8px; border-bottom: 1px solid var(--ink);
 }
-.mast-right { justify-self: end; }
+.mast-right { justify-self: end; display: inline-flex; gap: 18px; }
 .theme-toggle {
   border: 0; background: none; padding: 0; display: inline-flex; align-items: center; gap: 6px;
   font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink);
@@ -348,11 +348,11 @@ th.num, td.num { text-align: right; }
 .chip[aria-pressed="true"] .check { display: block; }
 .hint { font-family: var(--serif); font-style: italic; color: var(--ink-2); }
 .add-player { display: flex; gap: 8px; }
-.add-player input {
+.add-player input, .field {
   flex: 1; min-width: 0; padding: 8px 12px; border: 2px solid var(--ink); background: var(--field); color: var(--ink);
   font-family: var(--body); font-size: 15px;
 }
-.add-player input:focus { outline: none; box-shadow: 3px 3px 0 var(--red); }
+.add-player input:focus, .field:focus { outline: none; box-shadow: 3px 3px 0 var(--red); }
 .preview {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 54px; padding: 12px 14px;
   border: 2px dashed var(--hair); font-family: var(--serif); font-style: italic; color: var(--ink-2); font-size: 16px;
@@ -448,3 +448,8 @@ th.num, td.num { text-align: right; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-delay: 0ms !important; transition-duration: 0.001ms !important; }
 }
+
+.add-player[hidden] { display: none; }
+.modal-sm { width: min(420px, calc(100vw - 32px)); }
+.field { width: 100%; }
+.login-error { margin: -8px 0 0; color: var(--loss); font-weight: 600; }

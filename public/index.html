@@ -18,7 +18,7 @@
     <div class="mast-top">
       <span id="edition">No. 0</span>
       <span id="dateline"></span>
-      <span class="mast-right"><button type="button" class="theme-toggle" id="theme-toggle"></button></span>
+      <span class="mast-right"><button type="button" class="theme-toggle" id="admin-toggle"></button><button type="button" class="theme-toggle" id="theme-toggle"></button></span>
     </div>
     <h1 class="title">The Foosball League</h1>
     <div class="mast-bar">
@@ -103,7 +103,7 @@
       <div class="step">
         <div class="step-label"><span class="step-n">2</span><span id="who-label"></span></div>
         <div class="chips" id="who"></div>
-        <div class="add-player">
+        <div class="add-player" id="add-player-row" hidden>
           <input id="new-player" placeholder="New player name" maxlength="24" autocomplete="off">
           <button type="button" class="btn-ghost" id="add-player">Add player</button>
         </div>
@@ -116,6 +116,23 @@
       <footer class="modal-foot">
         <button type="button" class="btn-ghost" data-close>Cancel</button>
         <button type="submit" class="btn-primary" id="save-record" disabled>Save result</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="login" class="modal modal-sm" aria-labelledby="login-title">
+    <form id="login-form" novalidate>
+      <header class="modal-head">
+        <h2 id="login-title">Admin login</h2>
+        <button type="button" class="icon-btn" data-close-login aria-label="Close">
+          <svg viewBox="0 0 20 20"><path d="M5 5l10 10M15 5L5 15"/></svg>
+        </button>
+      </header>
+      <input id="admin-password" class="field" type="password" autocomplete="current-password" placeholder="Admin password">
+      <p class="login-error" id="login-error" hidden></p>
+      <footer class="modal-foot">
+        <button type="button" class="btn-ghost" data-close-login>Cancel</button>
+        <button type="submit" class="btn-primary">Log in</button>
       </footer>
     </form>
   </dialog>

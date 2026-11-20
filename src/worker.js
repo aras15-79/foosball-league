@@ -43,31 +43,37 @@ function sameOrigin(request) {
   return !site || site === "same-origin" || site === "none";
 }
 
-async function pinMatches(given, expected) {
+async function secretMatches(given, expected) {
+  if (!given || !expected) return false;
   const enc = new TextEncoder();
   const [a, b] = await Promise.all([given, expected].map((v) => crypto.subtle.digest("SHA-256", enc.encode(v))));
   return crypto.subtle.timingSafeEqual(a, b);
 }
 
-// Returns an error response when the write must be refused, otherwise null.
+// Resolves the caller to "admin" or "recorder", or returns an error response.
 async function authorize(request, env) {
-  if (!env.EDIT_PIN) return json({ error: "Editing is disabled until a PIN is configured" }, 503);
-  if (!sameOrigin(request)) return json({ error: "Cross-site request blocked" }, 403);
+  if (!env.EDIT_PIN && !env.ADMIN_PASSWORD) return { error: json({ error: "Editing is disabled until a PIN is configured" }, 503) };
+  if (!sameOrigin(request)) return { error: json({ error: "Cross-site request blocked" }, 403) };
   const type = request.headers.get("content-type") || "";
-  if (request.method === "POST" && !type.startsWith("application/json")) return json({ error: "Expected JSON" }, 415);
+  if (request.method === "POST" && !type.startsWith("application/json")) return { error: json({ error: "Expected JSON" }, 415) };
 
   const ip = request.headers.get("cf-connecting-ip") || "local";
   const since = Date.now() - PIN_WINDOW_MS;
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS auth_failures (ip TEXT NOT NULL, at INTEGER NOT NULL)").run();
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM auth_failures WHERE ip = ? AND at > ?").bind(ip, since).first();
-  if (n >= MAX_PIN_FAILURES) return json({ error: "Too many wrong PIN attempts, try again in an hour" }, 429);
+  if (n >= MAX_PIN_FAILURES) return { error: json({ error: "Too many wrong attempts, try again in an hour" }, 429) };
 
-  if (await pinMatches(request.headers.get("x-pin") || "", env.EDIT_PIN)) return null;
-  await env.DB.batch([
-    env.DB.prepare("INSERT INTO auth_failures (ip, at) VALUES (?, ?)").bind(ip, Date.now()),
-    env.DB.prepare("DELETE FROM auth_failures WHERE at < ?").bind(since),
-  ]);
-  return json({ error: "Wrong PIN" }, 401);
+  const admin = request.headers.get("x-admin");
+  const pin = request.headers.get("x-pin");
+  if (await secretMatches(admin, env.ADMIN_PASSWORD)) return { role: "admin" };
+  if (!admin && (await secretMatches(pin, env.EDIT_PIN))) return { role: "recorder" };
+  if (admin || pin) {
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO auth_failures (ip, at) VALUES (?, ?)").bind(ip, Date.now()),
+      env.DB.prepare("DELETE FROM auth_failures WHERE at < ?").bind(since),
+    ]);
+  }
+  return { error: json({ error: admin ? "Wrong admin password" : "Wrong PIN" }, 401) };
 }
 
 async function getState(env) {
@@ -143,11 +149,16 @@ async function route(request, env) {
   if (pathname === "/api/state" && method === "GET") return getState(env);
   if (method !== "POST" && method !== "DELETE") return json({ error: "Not found" }, 404);
 
-  const denied = await authorize(request, env);
-  if (denied) return denied;
+  const { role, error } = await authorize(request, env);
+  if (error) return error;
+
+  if (pathname === "/api/login" && method === "POST") {
+    return role === "admin" ? json({ role }) : json({ error: "Wrong admin password" }, 401);
+  }
+  if (pathname === "/api/matches" && method === "POST") return addMatch(request, env);
+  if (role !== "admin") return json({ error: "Only the admin can do this" }, 403);
 
   if (pathname === "/api/players" && method === "POST") return addPlayer(request, env);
-  if (pathname === "/api/matches" && method === "POST") return addMatch(request, env);
   const target = pathname.match(/^\/api\/(players|matches)\/(\d+)$/);
   if (target && method === "DELETE") {
     const id = Number(target[2]);
