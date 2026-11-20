@@ -22,6 +22,30 @@
   --display: "Anton", "Impact", sans-serif;
   --serif: "Newsreader", Georgia, serif;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --field: #fffdf8;
+  --tip-sub: #c9c3b4;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #171612;
+  --paper-2: #211f1a;
+  --paper-3: #2c2a24;
+  --ink: #ece6d8;
+  --ink-2: #bdb6a6;
+  --muted: #8a8475;
+  --hair: #3a382f;
+  --red: #e5483f;
+  --win: #1f9a3c;
+  --loss: #d9443d;
+  --gold: #e0b43a;
+  --pos: #3987e5;
+  --neg: #e66767;
+  --mid: #34322b;
+  --duel: #3987e5;
+  --tournament: #9085e9;
+  --team: #0ca30c;
+  --field: #0f0e0b;
+  --tip-sub: #5a5548;
 }
 
 * { box-sizing: border-box; }
@@ -51,7 +75,13 @@ svg { display: block; }
   font-family: var(--cond); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em;
   padding-bottom: 8px; border-bottom: 1px solid var(--ink);
 }
-.mast-right { text-align: right; }
+.mast-right { justify-self: end; }
+.theme-toggle {
+  border: 0; background: none; padding: 0; display: inline-flex; align-items: center; gap: 6px;
+  font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink);
+}
+.theme-toggle:hover { color: var(--red); }
+.theme-toggle svg { width: 14px; height: 14px; fill: currentColor; }
 .title {
   font-family: var(--display); text-transform: uppercase; text-align: center; line-height: 0.9;
   font-size: clamp(44px, 9.5vw, 118px); letter-spacing: -0.005em;
@@ -307,14 +337,14 @@ th.num, td.num { text-align: right; }
 .chip .avatar { width: 32px; height: 32px; box-shadow: none; }
 .chip:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-.chip.win[aria-pressed="true"] { background: var(--gold); color: var(--ink); }
+.chip.win[aria-pressed="true"] { background: var(--gold); color: #141414; }
 .chip:disabled { opacity: 0.3; }
 .chip .check { width: 14px; height: 14px; stroke: currentColor; stroke-width: 3; fill: none; display: none; }
 .chip[aria-pressed="true"] .check { display: block; }
 .hint { font-family: var(--serif); font-style: italic; color: var(--ink-2); }
 .add-player { display: flex; gap: 8px; }
 .add-player input {
-  flex: 1; min-width: 0; padding: 8px 12px; border: 2px solid var(--ink); background: #fffdf8; color: var(--ink);
+  flex: 1; min-width: 0; padding: 8px 12px; border: 2px solid var(--ink); background: var(--field); color: var(--ink);
   font-family: var(--body); font-size: 15px;
 }
 .add-player input:focus { outline: none; box-shadow: 3px 3px 0 var(--red); }
@@ -322,7 +352,7 @@ th.num, td.num { text-align: right; }
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 54px; padding: 12px 14px;
   border: 2px dashed var(--hair); font-family: var(--serif); font-style: italic; color: var(--ink-2); font-size: 16px;
 }
-.preview.ready { border: 2px solid var(--ink); background: #fffdf8; color: var(--ink); font-style: normal; }
+.preview.ready { border: 2px solid var(--ink); background: var(--field); color: var(--ink); font-style: normal; }
 .preview b { font-family: var(--cond); font-size: 18px; text-transform: uppercase; }
 .gain { margin-left: auto; font-family: var(--display); font-size: 24px; color: var(--red); }
 .modal-foot { display: flex; justify-content: flex-end; gap: 12px; }
@@ -365,7 +395,7 @@ th.num, td.num { text-align: right; }
   box-shadow: 4px 4px 0 var(--red);
 }
 .tip-title { font-family: var(--cond); font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: 0.04em; }
-.tip-sub { font-family: var(--serif); font-style: italic; color: #c9c3b4; font-size: 13px; margin-bottom: 8px; }
+.tip-sub { font-family: var(--serif); font-style: italic; color: var(--tip-sub); font-size: 13px; margin-bottom: 8px; }
 .tip-row { display: flex; align-items: center; gap: 8px; font-family: var(--cond); font-weight: 600; text-transform: uppercase; }
 .tip-row i { width: 10px; height: 10px; }
 .tip-row b { margin-left: auto; padding-left: 16px; font-variant-numeric: tabular-nums; }
@@ -392,7 +422,7 @@ th.num, td.num { text-align: right; }
 @media (max-width: 640px) {
   .masthead, main, .colophon { padding-left: 16px; padding-right: 16px; }
   .mast-top { grid-template-columns: 1fr auto; }
-  .mast-top .mast-right { display: none; }
+  #edition { display: none; }
   .mast-bar { flex-direction: column; align-items: stretch; }
   .tabs { justify-content: space-between; }
   .kpi { padding: 12px; }

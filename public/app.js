@@ -4,9 +4,13 @@ const RULES = {
   team: { label: "Team", glyph: "2v2", size: 4, winners: 2, points: 1, desc: "Two vs two" },
 };
 const TYPES = Object.keys(RULES);
-// Categorical palette validated for CVD separation in this order; yellow takes dark text.
-const COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"];
+// Categorical palettes per theme, validated for CVD separation in this order; light yellow takes dark text.
+const PALETTES = {
+  light: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"],
+  dark: ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#0ca30c", "#9085e9", "#e66767"],
+};
 const DARK_TEXT = new Set(["#eda100"]);
+const theme = () => (document.documentElement.dataset.theme === "light" ? "light" : "dark");
 const REDUCED_MOTION = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const ICON = {
@@ -70,7 +74,10 @@ async function load() {
 
 const player = (id) => state.players.find((p) => p.id === id);
 const nameOf = (id) => player(id)?.name ?? "Unknown";
-const colorOf = (id) => COLORS[Math.max(0, state.players.findIndex((p) => p.id === id)) % COLORS.length];
+const colorOf = (id) => {
+  const colors = PALETTES[theme()];
+  return colors[Math.max(0, state.players.findIndex((p) => p.id === id)) % colors.length];
+};
 const initials = (name) => name.slice(0, 1).toUpperCase() + name.slice(1, 2).toLowerCase();
 const avatar = (id, size = "") => {
   const c = colorOf(id);
@@ -710,7 +717,7 @@ function confetti(colors) {
   canvas.width = innerWidth * dpr;
   canvas.height = innerHeight * dpr;
   ctx.scale(dpr, dpr);
-  const palette = [...colors, "#d7261e", "#141414", "#c99a1a"];
+  const palette = [...colors, "#d7261e", "#e0b43a", "#c99a1a"];
   const parts = Array.from({ length: 180 }, (_, i) => {
     const fromLeft = i % 2 === 0;
     const angle = (fromLeft ? -60 : -120) * (Math.PI / 180) + (Math.random() - 0.5) * 0.9;
@@ -790,6 +797,23 @@ addEventListener("resize", () => {
   resizeTimer = setTimeout(() => { renderPeriod(); renderRace(inPeriod(), false); }, 150);
 });
 
+const THEME_LABEL = {
+  dark: `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.5"/><path d="M7.4 0h1.2v2.5H7.4zM7.4 13.5h1.2V16H7.4zM0 7.4h2.5v1.2H0zM13.5 7.4H16v1.2h-2.5z"/></svg>Day edition`,
+  light: `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 1.5A6.5 6.5 0 1 0 14.5 11 5.5 5.5 0 0 1 10.5 1.5z"/></svg>Night edition`,
+};
+function applyTheme(next) {
+  document.documentElement.dataset.theme = next;
+  $('meta[name="theme-color"]').content = next === "dark" ? "#171612" : "#f4f0e8";
+  $("#theme-toggle").innerHTML = THEME_LABEL[next];
+}
+$("#theme-toggle").addEventListener("click", () => {
+  const next = theme() === "dark" ? "light" : "dark";
+  store.set("theme", next);
+  applyTheme(next);
+  render(false);
+});
+
+applyTheme(theme());
 state.period = ["all", "month", "week"].includes(store.get("period")) ? store.get("period") : "all";
 skeleton();
 renderPeriod();
