@@ -151,14 +151,6 @@ function inPeriod() {
   return start ? state.matches.filter((m) => new Date(m.played_at) >= start) : state.matches;
 }
 
-const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-function relTime(iso) {
-  const secs = (new Date(iso) - Date.now()) / 1000;
-  const units = [["year", 31536000], ["month", 2592000], ["week", 604800], ["day", 86400], ["hour", 3600], ["minute", 60]];
-  for (const [unit, size] of units) if (Math.abs(secs) >= size) return rtf.format(Math.round(secs / size), unit);
-  return "just now";
-}
-const fullDate = (iso) => new Date(iso).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 function countUp(root) {
   root.querySelectorAll("[data-count]").forEach((el) => {
@@ -455,7 +447,7 @@ function renderRace(matches, animate) {
     const ranked = [...series].sort((a, b) => b.pts[i] - a.pts[i]);
     const m = matches[i - 1];
     const head = m
-      ? `<div class="tip-title">Match #${i} · ${RULES[m.type].label}</div><div class="tip-sub">${esc(names(m.winners))} won (+${m.points}) · ${esc(fullDate(m.played_at))}</div>`
+      ? `<div class="tip-title">Match #${i} · ${RULES[m.type].label}</div><div class="tip-sub">${esc(names(m.winners))} won (+${m.points})</div>`
       : `<div class="tip-title">Start of period</div><div class="tip-sub">Everyone at 0</div>`;
     showTip(head + ranked.map((s) => `<div class="tip-row"><i style="background:${colorOf(s.id)}"></i>${esc(nameOf(s.id))}<b>${s.pts[i]}</b></div>`).join(""), e.clientX, e.clientY);
   });
@@ -525,7 +517,6 @@ function renderFeed(matches) {
           <span class="vs">def.</span>
           <span class="side lose"><span class="stack">${losers.map((id) => avatar(id, "sm")).join("")}</span>${esc(names(losers))}</span>
         </div>
-        <time datetime="${m.played_at}" data-tip="${esc(fullDate(m.played_at))}">${relTime(m.played_at)}</time>
         ${state.admin ? `<button type="button" class="del" data-del="${m.id}" aria-label="Delete match">${ICON.trash}</button>` : ""}
       </li>`;
   }).join("");

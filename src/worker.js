@@ -83,7 +83,12 @@ async function getState(env) {
   ]);
   return json({
     players: players.results,
-    matches: matches.results.map((m) => ({ ...m, players: JSON.parse(m.players), winners: JSON.parse(m.winners) })),
+    matches: matches.results.map((m) => ({
+      ...m,
+      players: JSON.parse(m.players),
+      winners: JSON.parse(m.winners),
+      played_at: m.played_at.slice(0, 10),
+    })),
   });
 }
 
@@ -132,7 +137,7 @@ async function addMatch(request, env) {
   )
     .bind(body.type, JSON.stringify(players), JSON.stringify(winners), rule.points)
     .first();
-  return json({ ...row, players, winners }, 201);
+  return json({ ...row, players, winners, played_at: row.played_at.slice(0, 10) }, 201);
 }
 
 async function deleteMatch(id, env) {
