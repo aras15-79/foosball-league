@@ -4,12 +4,19 @@ const RULES = {
   team: { label: "Team", glyph: "2v2", size: 4, winners: 2, points: 1, desc: "Two vs two" },
 };
 const TYPES = Object.keys(RULES);
-// Categorical palettes per theme, validated for CVD separation in this order; light yellow takes dark text.
-const PALETTES = {
-  light: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"],
-  dark: ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#0ca30c", "#9085e9", "#e66767"],
+// Fixed colors for the founding players; new players take the remaining hues in order.
+const PLAYER_COLORS = {
+  mathyn: { light: "#eda100", dark: "#c98500" },
+  tim: { light: "#eb6834", dark: "#d95926" },
+  casper: { light: "#008300", dark: "#0ca30c" },
+  doga: { light: "#2a78d6", dark: "#3987e5" },
+  dante: { light: "#7a766c", dark: "#a39d8e" },
 };
-const DARK_TEXT = new Set(["#eda100"]);
+const EXTRA_COLORS = {
+  light: ["#6250d6", "#e87ba4", "#1baf7a", "#e34948"],
+  dark: ["#9085e9", "#d55181", "#199e70", "#e66767"],
+};
+const DARK_TEXT = new Set(["#eda100", "#a39d8e"]);
 const theme = () => (document.documentElement.dataset.theme === "light" ? "light" : "dark");
 const REDUCED_MOTION = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -75,8 +82,11 @@ async function load() {
 const player = (id) => state.players.find((p) => p.id === id);
 const nameOf = (id) => player(id)?.name ?? "Unknown";
 const colorOf = (id) => {
-  const colors = PALETTES[theme()];
-  return colors[Math.max(0, state.players.findIndex((p) => p.id === id)) % colors.length];
+  const fixed = PLAYER_COLORS[nameOf(id).toLowerCase()];
+  if (fixed) return fixed[theme()];
+  const others = state.players.filter((p) => !PLAYER_COLORS[p.name.toLowerCase()]);
+  const colors = EXTRA_COLORS[theme()];
+  return colors[Math.max(0, others.findIndex((p) => p.id === id)) % colors.length];
 };
 const initials = (name) => name.slice(0, 1).toUpperCase() + name.slice(1, 2).toLowerCase();
 const avatar = (id, size = "") => {
