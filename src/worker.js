@@ -151,6 +151,10 @@ async function route(request, env) {
   if (!pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
 
   const { method } = request;
+  const limiter = method === "GET" ? env.READ_LIMITER : env.WRITE_LIMITER;
+  const { success } = await limiter.limit({ key: request.headers.get("cf-connecting-ip") || "local" });
+  if (!success) return json({ error: "Too many requests, slow down a little" }, 429);
+
   if (pathname === "/api/state" && method === "GET") return getState(env);
   if (method !== "POST" && method !== "DELETE") return json({ error: "Not found" }, 404);
 
