@@ -307,15 +307,13 @@ function renderLeaderboard(stats) {
       <td class="num cnum hide-sm">${s.wins}</td>
       <td class="num cnum hide-sm">${s.played - s.wins}</td>
       <td class="hide-sm"><div class="rate"><div class="rate-bar"><span style="width:${s.winRate * 100}%"></span></div><span class="rate-n">${s.played ? pct(s.winRate) : "-"}</span></div></td>
-      <td class="hide-md"><div class="split">${TYPES.map((t) => `<span class="mini type-${t}" data-tip="${RULES[t].label}: ${s.byType[t].wins} won of ${s.byType[t].played}">${RULES[t].glyph} ${s.byType[t].wins}</span>`).join("")}</div></td>
-      <td class="hide-sm"><div class="form" data-tip="Last 5 results, oldest to newest">${formDots(s.results)}</div></td>
       <td class="pts" data-count="${s.points}">0</td>
     </tr>`).join("");
   el.innerHTML = `
     <table class="leaderboard">
       <thead><tr>
         <th>Pos</th><th>Player</th><th class="num">P</th><th class="num hide-sm">W</th><th class="num hide-sm">L</th>
-        <th class="hide-sm">Win %</th><th class="hide-md">Wins by type</th><th class="hide-sm">Form</th><th class="num">Pts</th>
+        <th class="hide-sm">Win %</th><th class="num">Pts</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
