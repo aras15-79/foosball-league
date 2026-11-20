@@ -1,0 +1,13 @@
+{
+  "name": "foosball-league",
+  "private": true,
+  "scripts": {
+    "db:local": "wrangler d1 execute foosball-league --local --file=schema.sql",
+    "db:remote": "wrangler d1 execute foosball-league --remote --file=schema.sql",
+    "dev": "wrangler pages dev",
+    "deploy": "wrangler pages deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
