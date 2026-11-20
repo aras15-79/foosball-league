@@ -392,6 +392,8 @@ th.num, td.num { text-align: right; }
 .rival-l { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-2); }
 .rival-n { font-family: var(--cond); font-weight: 700; font-size: 17px; text-transform: uppercase; }
 .rival-v { margin-left: auto; font-family: var(--display); font-size: 22px; }
+.remove-player { margin-top: 28px; width: 100%; color: var(--loss); border-color: var(--loss); }
+.remove-player:hover { background: var(--loss); color: #fff; }
 
 /* Overlays */
 .tooltip {

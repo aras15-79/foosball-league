@@ -570,8 +570,23 @@ function renderDrawer(id) {
     }).join("")}
     <div class="section-title">Last 10 results</div>
     <div class="form">${formDots(s.results, 10)}</div>
-    ${rivals ? `<div class="section-title">Rivals and partners</div><div class="rivals">${rivals}</div>` : ""}`;
+    ${rivals ? `<div class="section-title">Rivals and partners</div><div class="rivals">${rivals}</div>` : ""}
+    ${state.matches.some((m) => m.players.includes(id)) ? "" : `<button type="button" class="btn-ghost remove-player" data-remove-player="${id}">Remove player</button>`}`;
   countUp($("#drawer-body"));
+}
+
+async function onRemovePlayer(id) {
+  if (!confirm(`Remove ${nameOf(id)} from the league?`)) return;
+  try {
+    await api(`/api/players/${id}`, { method: "DELETE" });
+    const name = nameOf(id);
+    state.players = state.players.filter((p) => p.id !== id);
+    closeDrawer();
+    render(false);
+    toast(`${name} removed`);
+  } catch (err) {
+    toast(err.message, true);
+  }
 }
 
 function openDrawer(id) {
@@ -779,6 +794,8 @@ $("#period").addEventListener("click", (e) => {
 document.addEventListener("click", (e) => {
   const del = e.target.closest("[data-del]");
   if (del) { onDelete(del); return; }
+  const rm = e.target.closest("[data-remove-player]");
+  if (rm) { onRemovePlayer(Number(rm.dataset.removePlayer)); return; }
   const p = e.target.closest("[data-player]");
   if (p && !e.target.closest("dialog")) openDrawer(Number(p.dataset.player));
 });

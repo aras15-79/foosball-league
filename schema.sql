@@ -13,4 +13,9 @@ CREATE TABLE IF NOT EXISTS matches (
   played_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
 
+CREATE TABLE IF NOT EXISTS auth_failures (
+  ip TEXT NOT NULL,
+  at INTEGER NOT NULL
+);
+
 INSERT OR IGNORE INTO players (name) VALUES ('Mathyn'), ('Casper'), ('Dante'), ('Tim'), ('Doga');
