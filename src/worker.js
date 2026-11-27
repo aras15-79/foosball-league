@@ -55,7 +55,7 @@ async function authorize(request, env) {
   if (!env.EDIT_PIN && !env.ADMIN_PASSWORD) return { error: json({ error: "Editing is disabled until a PIN is configured" }, 503) };
   if (!sameOrigin(request)) return { error: json({ error: "Cross-site request blocked" }, 403) };
   const type = request.headers.get("content-type") || "";
-  if (request.method === "POST" && !type.startsWith("application/json")) return { error: json({ error: "Expected JSON" }, 415) };
+  if (request.method !== "DELETE" && !type.startsWith("application/json")) return { error: json({ error: "Expected JSON" }, 415) };
 
   const ip = request.headers.get("cf-connecting-ip") || "local";
   const since = Date.now() - PIN_WINDOW_MS;
@@ -94,7 +94,7 @@ async function getState(env) {
 
 async function addPlayer(request, env) {
   const body = await request.json().catch(() => ({}));
-  const name = String(body.name ?? "").trim().replace(/\s+/g, " ").slice(0, 24);
+  const name = cleanName(body.name);
   if (!name) return bad("Name is required");
 
   const exists = await env.DB.prepare("SELECT 1 FROM players WHERE name = ?").bind(name).first();
@@ -102,6 +102,21 @@ async function addPlayer(request, env) {
 
   const player = await env.DB.prepare("INSERT INTO players (name) VALUES (?) RETURNING id, name").bind(name).first();
   return json(player, 201);
+}
+
+const cleanName = (value) => String(value ?? "").trim().replace(/\s+/g, " ").slice(0, 24);
+
+async function renamePlayer(id, request, env) {
+  const body = await request.json().catch(() => ({}));
+  const name = cleanName(body.name);
+  if (!name) return bad("Name is required");
+
+  const taken = await env.DB.prepare("SELECT 1 FROM players WHERE name = ? AND id != ?").bind(name, id).first();
+  if (taken) return json({ error: `${name} is already in the league` }, 409);
+
+  const player = await env.DB.prepare("UPDATE players SET name = ? WHERE id = ? RETURNING id, name").bind(name, id).first();
+  if (!player) return json({ error: "Player not found" }, 404);
+  return json(player);
 }
 
 async function deletePlayer(id, env) {
@@ -156,7 +171,7 @@ async function route(request, env) {
   if (!success) return json({ error: "Too many requests, slow down a little" }, 429);
 
   if (pathname === "/api/state" && method === "GET") return getState(env);
-  if (method !== "POST" && method !== "DELETE") return json({ error: "Not found" }, 404);
+  if (!["POST", "PATCH", "DELETE"].includes(method)) return json({ error: "Not found" }, 404);
 
   const { role, error } = await authorize(request, env);
   if (error) return error;
@@ -169,6 +184,7 @@ async function route(request, env) {
 
   if (pathname === "/api/players" && method === "POST") return addPlayer(request, env);
   const target = pathname.match(/^\/api\/(players|matches)\/(\d+)$/);
+  if (target && target[1] === "players" && method === "PATCH") return renamePlayer(Number(target[2]), request, env);
   if (target && method === "DELETE") {
     const id = Number(target[2]);
     return target[1] === "players" ? deletePlayer(id, env) : deleteMatch(id, env);

@@ -4,13 +4,13 @@ const RULES = {
   team: { label: "Team", glyph: "2v2", size: 4, winners: 2, points: 1, desc: "Two vs two" },
 };
 const TYPES = Object.keys(RULES);
-// Fixed colors for the founding players; new players take the remaining hues in order.
+// Fixed colors for the founding players by id, so renames keep them; others take the remaining hues.
 const PLAYER_COLORS = {
-  mathyn: { light: "#eda100", dark: "#c98500" },
-  tim: { light: "#eb6834", dark: "#d95926" },
-  casper: { light: "#008300", dark: "#0ca30c" },
-  doga: { light: "#2a78d6", dark: "#3987e5" },
-  dante: { light: "#7a766c", dark: "#a39d8e" },
+  1: { light: "#eda100", dark: "#c98500" },
+  2: { light: "#008300", dark: "#0ca30c" },
+  3: { light: "#7a766c", dark: "#a39d8e" },
+  4: { light: "#eb6834", dark: "#d95926" },
+  5: { light: "#2a78d6", dark: "#3987e5" },
 };
 const EXTRA_COLORS = {
   light: ["#6250d6", "#e87ba4", "#1baf7a", "#e34948"],
@@ -119,9 +119,9 @@ async function load() {
 const player = (id) => state.players.find((p) => p.id === id);
 const nameOf = (id) => player(id)?.name ?? "Unknown";
 const colorOf = (id) => {
-  const fixed = PLAYER_COLORS[nameOf(id).toLowerCase()];
+  const fixed = PLAYER_COLORS[id];
   if (fixed) return fixed[theme()];
-  const others = state.players.filter((p) => !PLAYER_COLORS[p.name.toLowerCase()]);
+  const others = state.players.filter((p) => !PLAYER_COLORS[p.id]);
   const colors = EXTRA_COLORS[theme()];
   return colors[Math.max(0, others.findIndex((p) => p.id === id)) % colors.length];
 };
@@ -599,8 +599,23 @@ function renderDrawer(id) {
     <div class="section-title">Last 10 results</div>
     <div class="form">${formDots(s.results, 10)}</div>
     ${rivals ? `<div class="section-title">Rivals and partners</div><div class="rivals">${rivals}</div>` : ""}
+    ${state.admin ? `<button type="button" class="btn-ghost rename-player" data-rename-player="${id}">Rename player</button>` : ""}
     ${!state.admin || state.matches.some((m) => m.players.includes(id)) ? "" : `<button type="button" class="btn-ghost remove-player" data-remove-player="${id}">Remove player</button>`}`;
   countUp($("#drawer-body"));
+}
+
+async function onRenamePlayer(id) {
+  const current = nameOf(id);
+  const name = prompt(`New name for ${current}`, current)?.trim();
+  if (!name || name === current) return;
+  try {
+    const player = await api(`/api/players/${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
+    state.players = state.players.map((p) => (p.id === id ? player : p));
+    render(false);
+    toast(`${current} is now ${player.name}`);
+  } catch (err) {
+    toast(err.message, true);
+  }
 }
 
 async function onRemovePlayer(id) {
@@ -823,6 +838,8 @@ $("#period").addEventListener("click", (e) => {
 document.addEventListener("click", (e) => {
   const del = e.target.closest("[data-del]");
   if (del) { onDelete(del); return; }
+  const rn = e.target.closest("[data-rename-player]");
+  if (rn) { onRenamePlayer(Number(rn.dataset.renamePlayer)); return; }
   const rm = e.target.closest("[data-remove-player]");
   if (rm) { onRemovePlayer(Number(rm.dataset.removePlayer)); return; }
   const p = e.target.closest("[data-player]");
